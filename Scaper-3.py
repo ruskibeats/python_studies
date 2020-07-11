@@ -2,61 +2,70 @@ import requests
 import lxml.html
 import csv
 
-try:
-    with open('1.html') as fi:
-        text = fi.read()
-except:
-    html = requests.get('https://www.thomsonlocal.com/search/london/london?page=3')
-    text = html.content
-
-with open('1.html', 'wb') as fo:
-    fo.write(text)
-
-doc = lxml.html.fromstring(text)
-# Another tip, name your variables like business_details (snake case) or businessDetails (camel case),
-# I noticed you named your variables like business_Details, this is something looked down upon by
-# the coding community. But since it is a personal project, it really shouldn't matter. However,
-# if you are contributing to someone else's code it is important to keep this in mind. Therefore,
-# better to develop a habit to use universally accepted variable names :)
+# Setup
+pageCount = 0
+totalPages = 1
 businessDetails = []
-# Obtain each li element(posting) individually
-results = doc.xpath('//ol[@class="resultsBlock"]/li')
-# Iterate through each posting
-for result in results:
-    # Here you could do result.xpath(...)[0], however this would raise an error
-    # in the case there is no match (as it would return an empty list - [])
-    # Returns a list [businessName] or [] if no match is found
-    businessName = result.xpath('.//h2[@itemprop="name"]/text()')
-    streetAddress = result.xpath('.//span[@itemprop="streetAddress"]/text()')  # Similar as above
-    addressLocality = result.xpath(
-        './/span[@itemprop="addressLocality"]/text()')  # Similar as above
-    postalCode = result.xpath('.//span[@itemprop="postalCode"]/text()')  # Similar as above
-    webSite = result.xpath('.//a[@itemprop="sameAs"]/@href')  # Similar as above
-    businessDetail = [businessName, streetAddress, addressLocality, postalCode, webSite]
-    print (businessDetail)
 
-# Checks for which attribute is missing, this eliminates the
-# need to error check each each variable
-    for i in range(len(businessDetail)):
-        # Check if entry is present
-        if len(businessDetail[i]) > 0:
-            businessDetail[i] = businessDetail[i][0]
-# If entry
-            print (businessDetail[i][0])
-        else:
-            print ('There is a missing attribute')
-            print (businessDetail[i])
-            businessDetail[i] = ''
-    print (businessDetail[i])
-    businessDetails.append(businessDetail)
+# This website has more than 1 page so I need to iterate through
+# I setup a loop based on the page count which I calculate through number of
+# results divided by 25 which is the total number diplayed
 
-    print (businessDetails)
-f = open('/Users/russellbatchelor/Dropbox/pythonwork/thomsonlocal.csv', 'a')
+while pageCount <= totalPages:
+    pageCount = str(pageCount)
+    # I open the URL for the first pass
+    pagetoLoad = 'https://www.thomsonlocal.com/search/computer-support/hemel-hempstead-hertfordshire?page=' + pageCount
+    html = requests.get(pagetoLoad)
+    text = html.content
+    doc = lxml.html.fromstring(text)
+    print (pagetoLoad)
+    # Some quick maths for the number of iterations I will need to do
+    results = doc.xpath('//ol[@class="resultsBlock"]/li')
+    totalResults = doc.xpath('.//span[@class="totalResults"]/text()')
+    # I convert a list to a string
+    totalResults = str(totalResults)
+    # Strip out everything but the digits and convert the result to an integer
+    totalResults = int(totalResults.replace("['", "").replace("Results found']", ""))
+    # I work in the negative to make the roundup maths easier
+    totalPages = (-(-totalResults/25))
 
-writer = csv.writer(f)
-writer.writerow(['Name', 'Address', 'Location', 'Postcode', 'Website'])
-print (businessDetail)
-# Write out each result obtained individually
-for businessDetail in businessDetails:
+    print (pageCount)
+    print (totalPages)
 
-    writer.writerow(businessDetail)
+    # Iterate through each posting
+    for result in results:
+        # Here you could do result.xpath(...)[0], however this would raise an error
+        # in the case there is no match (as it would return an empty list - [])
+        # Returns a list [businessName] or [] if no match is found
+        businessName = result.xpath('.//h2[@itemprop="name"]/text()')
+        streetAddress = result.xpath(
+            './/span[@itemprop="streetAddress"]/text()')  # Similar as above
+        addressLocality = result.xpath(
+            './/span[@itemprop="addressLocality"]/text()')  # Similar as above
+        postalCode = result.xpath('.//span[@itemprop="postalCode"]/text()')  # Similar as above
+        webSite = result.xpath('.//a[@itemprop="sameAs"]/@href')  # Similar as above
+        businessDetail = [businessName, streetAddress, addressLocality, postalCode, webSite]
+
+    # Checks for which attribute is missing, this eliminates the
+    # need to error check each each variable
+        for i in range(len(businessDetail)):
+            # Check if entry is present
+            if len(businessDetail[i]) > 0:
+                businessDetail[i] = businessDetail[i][0]
+            else:
+                businessDetail[i] = ''
+        businessDetails.append(businessDetail)
+    f = open('/Users/russellbatchelor/Dropbox/pythonwork/thomsonlocal.csv', 'w')
+
+    writer = csv.writer(f)
+    writer.writerow(['Name', 'Address', 'Location', 'Postcode', 'Website'])
+    # Write out each result obtained individually
+    for businessDetail in businessDetails:
+        writer.writerow(businessDetail)
+    # I convert pagecount to integer to update the counter, pageCount is used to
+    # to construct the URL - there is probably a better way of doing this
+    pageCount = int(pageCount)
+    pageCount = pageCount + 1
+# I close the file after I have iterated through all pages
+f.close()
+print ('end')
