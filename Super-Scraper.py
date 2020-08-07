@@ -69,6 +69,10 @@ while pageCount <= totalPages:
         print (webCheck)
         businessDetail = [businessName, streetAddress,
                           addressLocality, postalCode, webSite, webCheck]
+        # We are going to search Linkedin for a single profile
+        # the search string is built from a web address and email address plus
+        # some more detail made from the businessName
+        # we only want one result
 
         urlMain = 'http://www.google.com/search?q=site:linkedin.com/company '
         wwwString = str(webSite)
@@ -83,14 +87,19 @@ while pageCount <= totalPages:
         builtUrl = urlMain+searchEmail+oR+searchDomain+resultCount
 
         print (builtUrl)
+        # We use that builtUrl and then select the a hrefs
+        # if successful there will be a link to linkedin in links[26]
         html = requests.get(headers=headers, url=builtUrl)
         text = html.content
         doc = lxml.html.fromstring(text)
         # results = doc.xpath('.//h3[@class="LC20lb DKV0Md"]/text()')
-
         select = cssselect.CSSSelector("a")
         links = [el.get('href') for el in select(doc)]
-        print ('heelo', links)
+        # What I need to do is check if there is a links[26]
+        # If there isn't I just want to move on
+        # Maybe I do the same check as the missing attribute one in line 105?
+
+        print links[26]
 
     # Checks for which attribute is missing, this eliminates the
     # need to error check each each variable

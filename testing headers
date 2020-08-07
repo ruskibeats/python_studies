@@ -1,0 +1,31 @@
+import requests
+import lxml.html
+from lxml import cssselect, html
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0',
+}
+# Lets build the search String
+urlMain = 'http://www.google.com/search?q=site:linkedin.com/company '
+searchEmail = '\"@public.digital\"'
+searchDomain = '\"public.digital\"'
+searchDetail = '\"Pubic Digital uk\"'
+oR = ' OR '
+resultCount = '&num=1'
+builtUrl = urlMain+searchEmail+oR+searchDomain+oR+searchDetail+resultCount
+print builtUrl
+
+html = requests.get(headers=headers, url=builtUrl)
+text = html.content
+doc = lxml.html.fromstring(text)
+results = doc.xpath('.//h3[@class="LC20lb DKV0Md"]/text()')
+print (results)
+
+select = cssselect.CSSSelector("a")
+links = [el.get('href') for el in select(doc)]
+linkStrip = links[26].replace("https://www.linkedin.com/company/", "")
+print links[26]
+print linkStrip
+links = iter(links)
+for n, l in enumerate(links):
+    print n, l
