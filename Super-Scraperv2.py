@@ -50,9 +50,6 @@ while pageCount <= totalPages:
     # I work in the negative to make the roundup maths easier
     totalPages = (-(-totalResults/25))
 
-    print (pageCount)
-    print (totalPages)
-
     # Iterate through each posting
     for result in results:
 
@@ -68,7 +65,6 @@ while pageCount <= totalPages:
         webSite = result.xpath('.//a[@itemprop="sameAs"]/@href')  # Similar as above
         webResult = str(webSite).strip('[]').strip("'")
         webCheck = str(check_url(webResult))
-        print (webCheck)
         businessDetail = [businessName, streetAddress,
                           addressLocality, postalCode, webSite, webCheck]
         # We are going to search Linkedin for a single profile
@@ -83,32 +79,28 @@ while pageCount <= totalPages:
         searchDomain = (re.sub(r'http:\/\/www.', '', wwwString)[1:-1])
         # searchDetail = str(busString + " ")[1:-1]
         oR = ' OR '
-        resultCount = '&num=1'
-
-        # print str(searchEmail)[1:-1]
 
         builtUrl = urlMain+searchEmail+oR+searchDomain
-
-        print (builtUrl)
-
         params = {
             'access_key': '7a0cc694ec52a284c7e8cfd6e4e7116e',
             'query': builtUrl
         }
 
-        api_result = requests.get('http://api.serpstack.com/search', params)
-        api_response = api_result.json()
-
-        print "Total results: ", api_response['search_information']['total_results']
-        googleResults = api_response['organic_results']
-        for number, result in enumerate(api_response['organic_results'], start=1):
-            print "%s. %s" % (number, result['url'])
-        if len(googleResults) > 0:
-            googleCheck = googleResults[0]['url']
+        if webCheck == 'True':
+            #print ('hello')
+            #print params
+            api_result = requests.get('http://api.serpstack.com/search', params)
+            api_response = api_result.json()
+            googleResults = api_response['organic_results']
+            if len(googleResults) > 0:
+                #print ('googleResults', googleResults)
+                linkeDin = googleResults[0]['url']
+                #print ('googleCheck', googleCheck)
+            else:
+                linkeDin = ['']
         else:
-            googleCheck = ''
-        businessDetails.append(googleCheck)
-        print businessDetails
+            linkeDin = ['']
+        businessDetail.append([linkeDin])
 
     # Checks for which attribute is missing, this eliminates the
     # need to error check each each variable
@@ -118,8 +110,6 @@ while pageCount <= totalPages:
                 businessDetail[i] = businessDetail[i][0]
             else:
                 businessDetail[i] = ''
-
-        print (businessDetail)
         businessDetails.append(businessDetail)
     f = open('/Users/russellbatchelor/Dropbox/pythonwork/thomsonlocal.csv', 'w')
 
