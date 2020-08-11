@@ -55,7 +55,7 @@ while pageCount <= totalPages:
 
     # Iterate through each posting
     for result in results:
-        time.sleep(60)
+
         # Here you could do result.xpath(...)[0], however this would raise an error
         # in the case there is no match (as it would return an empty list - [])
         # Returns a list [businessName] or [] if no match is found
@@ -76,32 +76,39 @@ while pageCount <= totalPages:
         # some more detail made from the businessName
         # we only want one result
 
-        urlMain = 'http://www.google.com/search?q=site:linkedin.com/company '
+        urlMain = 'site:linkedin.com/company '
         wwwString = str(webSite)
         busString = str(businessName)
         searchEmail = (re.sub(r'http:\/\/www.', '@', wwwString)[1:-1])
         searchDomain = (re.sub(r'http:\/\/www.', '', wwwString)[1:-1])
-        #searchDetail = str(busString + " ")[1:-1]
+        # searchDetail = str(busString + " ")[1:-1]
         oR = ' OR '
         resultCount = '&num=1'
 
-        #print str(searchEmail)[1:-1]
-        builtUrl = urlMain+searchEmail+oR+searchDomain+resultCount
+        # print str(searchEmail)[1:-1]
+
+        builtUrl = urlMain+searchEmail+oR+searchDomain
 
         print (builtUrl)
-        # We use that builtUrl and then select the a hrefs
-        # if successful there will be a link to linkedin in links[26]
-        html = requests.get(headers=headers, url=builtUrl)
-        text = html.content
-        doc = lxml.html.fromstring(text)
-        # results = doc.xpath('.//h3[@class="LC20lb DKV0Md"]/text()')
-        select = cssselect.CSSSelector("a")
-        links = [el.get('href') for el in select(doc)]
-        # What I need to do is check if there is a links[26]
-        # If there isn't I just want to move on
-        # Maybe I do the same check as the missing attribute one in line 105?
 
-        print links[26]
+        params = {
+            'access_key': '7a0cc694ec52a284c7e8cfd6e4e7116e',
+            'query': builtUrl
+        }
+
+        api_result = requests.get('http://api.serpstack.com/search', params)
+        api_response = api_result.json()
+
+        print "Total results: ", api_response['search_information']['total_results']
+        googleResults = api_response['organic_results']
+        for number, result in enumerate(api_response['organic_results'], start=1):
+            print "%s. %s" % (number, result['url'])
+        if len(googleResults) > 0:
+            googleCheck = googleResults[0]['url']
+        else:
+            googleCheck = ''
+        businessDetails.append(googleCheck)
+        print businessDetails
 
     # Checks for which attribute is missing, this eliminates the
     # need to error check each each variable
@@ -117,7 +124,8 @@ while pageCount <= totalPages:
     f = open('/Users/russellbatchelor/Dropbox/pythonwork/thomsonlocal.csv', 'w')
 
     writer = csv.writer(f)
-    writer.writerow(['Name', 'Address', 'Location', 'Postcode', 'Website', 'Website'])
+    writer.writerow(['Name', 'Address', 'Location', 'Postcode',
+                     'Website', 'Website', 'googleCheck'])
     # Write out each result obtained individually
     for businessDetail in businessDetails:
         writer.writerow(businessDetail)
