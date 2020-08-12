@@ -13,6 +13,7 @@ headers = {
 # Setup
 pageCount = 0
 totalPages = 0
+counTer = 1
 businessDetails = []
 
 
@@ -52,7 +53,7 @@ while pageCount <= totalPages:
 
     # Iterate through each posting
     for result in results:
-
+        print counTer, totalResults
         # Here you could do result.xpath(...)[0], however this would raise an error
         # in the case there is no match (as it would return an empty list - [])
         # Returns a list [businessName] or [] if no match is found
@@ -66,27 +67,26 @@ while pageCount <= totalPages:
         webResult = str(webSite).strip('[]').strip("'")
         webCheck = str(check_url(webResult))
         businessDetail = [businessName, streetAddress,
-                          addressLocality, postalCode, webSite, webCheck]
+                          addressLocality, postalCode, webSite]
+        businessDetail.append([webCheck])
         # We are going to search Linkedin for a single profile
         # the search string is built from a web address and email address plus
         # some more detail made from the businessName
         # we only want one result
 
-        urlMain = 'site:linkedin.com/company '
-        wwwString = str(webSite)
-        busString = str(businessName)
-        searchEmail = (re.sub(r'http:\/\/www.', '@', wwwString)[1:-1])
-        searchDomain = (re.sub(r'http:\/\/www.', '', wwwString)[1:-1])
-        # searchDetail = str(busString + " ")[1:-1]
-        oR = ' OR '
-
-        builtUrl = urlMain+searchEmail+oR+searchDomain
-        params = {
-            'access_key': '7a0cc694ec52a284c7e8cfd6e4e7116e',
-            'query': builtUrl
-        }
-
         if webCheck == 'True':
+            urlMain = 'site:linkedin.com/company '
+            wwwString = str(webSite)
+            busString = str(businessName)
+            searchEmail = (re.sub(r'http:\/\/www.', '@', wwwString)[1:-1])
+            searchDomain = (re.sub(r'http:\/\/www.', '', wwwString)[1:-1])
+            # searchDetail = str(busString + " ")[1:-1]
+            oR = ' OR '
+            builtUrl = urlMain+searchEmail+oR+searchDomain
+            params = {
+                'access_key': '7a0cc694ec52a284c7e8cfd6e4e7116e',
+                'query': builtUrl
+            }
             #print ('hello')
             #print params
             api_result = requests.get('http://api.serpstack.com/search', params)
@@ -94,13 +94,17 @@ while pageCount <= totalPages:
             googleResults = api_response['organic_results']
             if len(googleResults) > 0:
                 #print ('googleResults', googleResults)
-                linkeDin = googleResults[0]['url']
+                linkeDinurl = [str(googleResults[0]['url'])]
+                #linkeDinurl = [str(linkeDinurl)]
                 #print ('googleCheck', googleCheck)
             else:
-                linkeDin = ['']
+                linkeDinurl = ['']
         else:
-            linkeDin = ['']
-        businessDetail.append([linkeDin])
+            linkeDinurl = ['']
+
+        print (linkeDinurl, type(linkeDinurl))
+        #linkeDinurl = [str(linkeDinurl)]
+        businessDetail.append(linkeDinurl)
 
     # Checks for which attribute is missing, this eliminates the
     # need to error check each each variable
@@ -111,18 +115,19 @@ while pageCount <= totalPages:
             else:
                 businessDetail[i] = ''
         businessDetails.append(businessDetail)
+        counTer = counTer + 1
     f = open('/Users/russellbatchelor/Dropbox/pythonwork/thomsonlocal.csv', 'w')
-
     writer = csv.writer(f)
     writer.writerow(['Name', 'Address', 'Location', 'Postcode',
-                     'Website', 'Website', 'googleCheck'])
+                     'Website', 'Website', 'LinkedinUrl'])
     # Write out each result obtained individually
     for businessDetail in businessDetails:
         writer.writerow(businessDetail)
     # I convert pagecount to integer to update the counter, pageCount is used to
     # to construct the URL - there is probably a better way of doing this
     pageCount = int(pageCount)
-    pageCount = pageCount + 1
+    pageCount = pageCount + 6
+
 # I close the file after I have iterated through all pages
 f.close()
 print ('end')
