@@ -1,0 +1,48 @@
+# importing pandas as pd
+import pandas as pd
+import csv
+persons = ["John", "Marissa", "Pete", "Dayton"]
+startRange = 0
+endRange = 0
+# Read in the CSV File
+old = pd.read_csv('/Users/russellbatchelor/github/python_studies/Accountants.csv')
+
+# Drop the Columns I don't want
+df = old[['profileUrl']].copy()
+df = df.rename(columns={'profileUrl': 'profile_Url'})
+# Replace some words
+df['profile_Url'] = df['profile_Url'].str.replace('/sales/people', '/in')
+
+# Then we do a text to columns splitting on comma and bringing back only one column
+df['profile_Url'] = df['profile_Url'].str.split(',',).str[0]
+# Write the dataframe to CSV twister
+df.to_csv(r'/Users/russellbatchelor/github/python_studies/twister.csv', index=False, header=True)
+
+# I  iterate over the data frame
+lineCount = (len(df)//len(persons))+1
+endRange = lineCount
+
+# Start a loop to create spilt the dataframe into x equal lines depending on people count
+# each user is going to get their own file
+diter = df.iteritems()
+print type(diter)
+
+
+exit()
+for person in persons:
+    innerlist = []
+    print ('we are here', person)
+
+    for writeLines in range(startRange, endRange):
+        print writeLines
+        print(person + " has lines", writeLines)
+        print innerlist
+        innerlist.append(writeLines)
+    startRange = startRange+lineCount
+    endRange = endRange+lineCount
+
+    df = pd.DataFrame(data={"profile_Url": innerlist})
+    df.to_csv('/Users/russellbatchelor/github/python_studies/' +
+              person+'.csv', sep=',', index=False)
+    exit()
+    print innerlist
