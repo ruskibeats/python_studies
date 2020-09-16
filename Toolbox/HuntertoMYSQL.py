@@ -14,6 +14,6 @@ sqlEngine = create_engine("mysql+pymysql://{user}:{pw}@209.97.133.232/{db}"
 # """ API KEY """
 # https: // api.hunter.io/v2/domain-search?domain = stripe.com & api_key = f68a4cb3f9c2ec8fac1bedd2ab9df424760404e3
 contents = requests.get("https://api.hunter.io/v2/domain-search?domain=stripe.com&api_key=f68a4cb3f9c2ec8fac1bedd2ab9df424760404e3").json()
-df = pd.DataFrame(contents['data']['emails'])
+df = pd.DataFrame(contents)
 print(df)
 df.to_sql(name='hunter', con=sqlEngine, if_exists='append', index=False)
