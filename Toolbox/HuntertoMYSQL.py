@@ -18,12 +18,17 @@ contents = requests.get("https://api.hunter.io/v2/domain-search?domain=stripe.co
 data = []
 for email in contents['data']['emails']:
         for source in email['sources']:
+                metadata = contents['data'].copy()
+                del metadata['emails']
+                metadata['data_domain'] = metadata['domain']
+                del metadata['domain']
                 record = email.copy()
                 del record['value']
                 del record['sources']
                 del record['verification']
                 record['email'] = email['value']
                 record.update(source)
+                record.update(metadata)
                 data.append(record)
 df = pd.DataFrame(data)
 df.to_sql(name='hunter', con=sqlEngine, if_exists='append', index=False)
